@@ -1,0 +1,43 @@
+# =============================================================================
+# Display Configuration
+# =============================================================================
+#
+# Configures the e-paper display and the main display update lambda.
+#
+# The display layout is implemented through reusable drawing functions defined
+# in the project header files.
+
+display:
+  - platform: epaper_spi
+    id: eink
+    model: WeAct-4.2in-3c
+    dimensions:
+      width: 400
+      height: 300
+    cs_pin: GPIO10            
+    busy_pin: GPIO18          # Prototype PCB.
+    dc_pin: GPIO17            # Prototype PCB.
+    reset_pin: GPIO16         # Prototype PCB.
+    #busy_pin: GPIO16         # v1.0 Hardware.
+    #dc_pin: GPIO18           # v1.0 Hardware.
+    #reset_pin: GPIO17        # v1.0 Hardware.
+
+    reset_duration: 2ms
+    update_interval: never
+    full_update_every: 1
+    data_rate: 10MHz
+
+    lambda: |-
+
+      drawFrame(it);
+
+      drawHeader(it);
+
+      drawForecast(it);
+
+      drawAirSensor(it);
+
+      drawSmartPlugs(it);
+
+      drawRoomSensors(it);
+      

@@ -1,0 +1,213 @@
+# =============================================================================
+# Home Assistant Display
+# =============================================================================
+#
+# Main ESPHome configuration file.
+#
+# Includes the project packages, external header files, and hardware-specific
+# configuration required to build the Home Assistant Display firmware.
+
+esphome:
+  name: ha-display
+  includes:
+    - include/led.h
+    - include/layout.h
+    - include/weather_icons.h
+    - include/battery.h
+    - include/display.h                             # Comment this line to use BSEC2.
+    #- include/display_bsec.h                       # Uncomment this line to use BSEC2.
+    - include/power.h
+  on_boot:
+    priority: -100
+    then:
+      # Refresh Screen
+      - script.execute: refresh_display          
+
+# ESP32 DevKit definition.
+esp32:
+  board: esp32-s3-devkitc-1
+  framework:
+    type: esp-idf
+
+# YAML files includes.
+packages:
+  wifi: !include packages/wifi.yaml
+  entities: !include packages/entities.yaml
+  sensor: !include packages/sensors.yaml            # Comment this line to use BSEC2.
+  #sensor: !include packages/sensors_bsec.yaml      # Uncomment this line to use BSEC2.
+  font: !include packages/fonts.yaml
+  display: !include packages/display.yaml
+  forecast: !include packages/forecast.yaml
+
+api:
+  reboot_timeout: 0s
+
+# UART Log, change the level if debugging informaiton is needed.
+logger:
+  level: NONE
+  #level: VERY_VERBOSE
+  hardware_uart: UART0
+
+# Deep Sleep.
+deep_sleep:
+  id: deep_sleep_control
+  #run_duration: 75s
+  sleep_duration: 15min
+  
+  esp32_ext1_wakeup:
+    pins:
+      - number: GPIO4       # Prototype PCB.
+      #- number: GPIO13     # v1.0 Hardware.
+    mode: ANY_HIGH
+
+# Time entity. 
+time:
+  - platform: homeassistant
+    id: ha_time
+
+# Debug LED.
+light:
+  - platform: esp32_rmt_led_strip
+    id: status_led
+
+    pin: GPIO48
+
+    chipset: WS2812
+    rgb_order: GRB
+
+    num_leds: 1
+
+    default_transition_length: 0s
+    restore_mode: ALWAYS_OFF
+
+# BME68x I2C bus.
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  frequency: 400kHz
+  scan: true
+  id: i2c_a
+
+# Display SPI.
+spi:
+  clk_pin: GPIO12
+  mosi_pin: GPIO11 
+
+# Global variables.
+globals:
+  - id: wifi_ok
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: ha_ok
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: sleep_time
+    type: int 
+    restore_value: no
+    initial_value: '0'
+
+  - id: display_update_counter
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+# Timer to update screen when Deep Sleep is OFF.
+interval:
+  - interval: 1min
+    then:
+      - if:
+          condition:
+            binary_sensor.is_off: ha_display_deep_sleep
+          then:
+            # Increase counter.
+            - lambda: |-
+                id(display_update_counter)++;
+
+            - if:
+                condition:
+                  # Check counter and sleep duration.
+                  lambda: |-
+                    const float sleep_duration = id(ha_sleep_duration).state;
+                    return !isnan(sleep_duration) &&
+                           sleep_duration > 0 &&
+                           id(display_update_counter) >= (int) sleep_duration;
+                then:
+                  # Update screen if the configured interval has elapsed.
+                  - lambda: |-
+                      id(display_update_counter) = 0;
+                  - script.execute: refresh_display       
+
+# Refresh Screen Script.
+script:
+  - id: refresh_display
+    mode: single
+    then:
+      - lambda: |-
+          ledBoot();
+
+      # Wait 20s for WiFi connection.
+      - wait_until:
+          condition:
+            lambda: |-
+              return id(wifi_ok);
+          timeout: 20s
+
+      # Wait 15s for HA connection.
+      - if:
+          condition:
+            lambda: |-
+              return id(wifi_ok);
+          then:
+            - wait_until:
+                condition:
+                  lambda: |-
+                    return id(ha_ok);
+                timeout: 15s
+      
+      - lambda: |-
+          ledRefresh();
+
+      # Wait 2s to ensure HA data updated.
+      - delay: 2s
+
+      # Calculate next Sleep period duration.
+      - lambda: |-          
+          id(sleep_time) = getSleepDuration(
+              (int) id(ha_sleep_start_hour).state,
+              (int) id(ha_wake_hour).state);
+
+      # Update display with new retrieved data.
+      - component.update: eink
+      
+      # Delay to ensure full screen refresh.
+      - delay: 22s
+
+      - light.turn_off:
+          id: status_led
+
+      - delay: 2s
+
+      - if:
+          condition:
+            or:
+              # Enter deep sleep if HA Toggle is ON.
+              - binary_sensor.is_on: ha_display_deep_sleep
+
+              # Enter deep sleep if WiFi not connected.
+              - not:
+                  lambda: |-
+                    return id(wifi_ok);
+                  
+              # Enter deep sleep if Home Assistant not connected.
+              - not:
+                  lambda: |-
+                    return id(ha_ok);
+          then:
+            - deep_sleep.enter:
+                id: deep_sleep_control
+                sleep_duration: !lambda |-
+                  return id(sleep_time);

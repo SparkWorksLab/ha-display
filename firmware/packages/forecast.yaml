@@ -1,0 +1,108 @@
+# =============================================================================
+# Weather Forecast
+# =============================================================================
+#
+# Defines the Home Assistant entities used to retrieve weather forecast data
+# and makes the forecast attributes available to the display.
+
+text_sensor:
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_day_1
+    id: forecast_day_1
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_condition_1
+    id: forecast_condition_1
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_day_2
+    id: forecast_day_2
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_condition_2
+    id: forecast_condition_2
+    
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_day_3
+    id: forecast_day_3
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_condition_3
+    id: forecast_condition_3
+    
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_day_4
+    id: forecast_day_4
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_condition_4
+    id: forecast_condition_4
+    
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_day_5
+    id: forecast_day_5
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_condition_5
+    id: forecast_condition_5
+
+sensor:
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_max_1
+    id: forecast_temp_max_1
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_min_1
+    id: forecast_temp_min_1
+    
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_max_2
+    id: forecast_temp_max_2
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_min_2
+    id: forecast_temp_min_2
+    
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_max_3
+    id: forecast_temp_max_3
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_min_3
+    id: forecast_temp_min_3
+    
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_max_4
+    id: forecast_temp_max_4
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_min_4
+    id: forecast_temp_min_4
+    
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_max_5
+    id: forecast_temp_max_5
+
+  - platform: homeassistant
+    entity_id: sensor.eink_sensors
+    attribute: forecast_temp_min_5
+    id: forecast_temp_min_5

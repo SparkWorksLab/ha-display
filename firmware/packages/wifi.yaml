@@ -1,0 +1,34 @@
+# =============================================================================
+# Wi-Fi and API Configuration
+# =============================================================================
+#
+# Configures the Wi-Fi connection and ESPHome API used to communicate with
+# Home Assistant.
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  on_connect:
+    then:
+      - lambda: |-
+          id(wifi_ok) = true;
+          ledConnect();
+
+  on_disconnect:
+    then:
+      - lambda: |-
+          id(wifi_ok) = false;
+          id(ha_ok) = false;
+          ledDisconnect();
+
+ota:
+  - platform: esphome
+
+api:
+  on_client_connected:
+    then:
+      - lambda: |-
+          id(ha_ok) = true;
+          ledClient();
+

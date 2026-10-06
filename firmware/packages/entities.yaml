@@ -1,0 +1,142 @@
+# =============================================================================
+# Home Assistant Entities
+# =============================================================================
+#
+# Defines the Home Assistant entities exposed to ESPHome, including room
+# sensors, Smart Plug data, battery information, and configurable sleep
+# schedule parameters.
+
+sensor:
+  # Living room parameters
+  - platform: homeassistant
+    id: t1_temperature
+    entity_id: sensor.t1_temperature
+  - platform: homeassistant
+    id: t1_humidity
+    entity_id: sensor.t1_humidity 
+  - platform: homeassistant
+    id: t1_battery
+    entity_id: sensor.t1_battery 
+  - platform: homeassistant
+    id: t1_age
+    entity_id: sensor.t1_sensor_age
+
+  # Lab parameters
+  - platform: homeassistant
+    id: t2_temperature
+    entity_id: sensor.t2_temperature
+  - platform: homeassistant
+    id: t2_humidity
+    entity_id: sensor.t2_humidity
+  - platform: homeassistant
+    id: t2_battery
+    entity_id: sensor.t2_battery 
+  - platform: homeassistant
+    id: t2_age
+    entity_id: sensor.t2_sensor_age
+
+  # Bedroom parameters
+  - platform: homeassistant
+    id: t3_temperature
+    entity_id: sensor.t3_temperature
+  - platform: homeassistant
+    id: t3_humidity
+    entity_id: sensor.t3_humidity
+  - platform: homeassistant
+    id: t3_battery
+    entity_id: sensor.t3_battery 
+  - platform: homeassistant
+    id: t3_age
+    entity_id: sensor.t3_sensor_age
+
+  # Outside parameters
+  - platform: homeassistant
+    id: t4_temperature
+    entity_id: sensor.t4_temperature
+  - platform: homeassistant
+    id: t4_humidity
+    entity_id: sensor.t4_humidity  
+  - platform: homeassistant
+    id: t4_battery
+    entity_id: sensor.t4_battery 
+  - platform: homeassistant
+    id: t4_age
+    entity_id: sensor.t4_sensor_age  
+
+  # P1 Smartplug
+  - platform: homeassistant
+    id: p1_voltage
+    entity_id: sensor.p1_voltage
+  - platform: homeassistant
+    id: p1_current
+    entity_id: sensor.p1_current  
+  - platform: homeassistant
+    id: p1_power
+    entity_id: sensor.p1_power
+
+  # P2 Smartplug
+  - platform: homeassistant
+    id: p2_voltage
+    entity_id: sensor.p2_voltage
+  - platform: homeassistant
+    id: p2_current
+    entity_id: sensor.p2_current  
+  - platform: homeassistant
+    id: p2_power
+    entity_id: sensor.p2_power
+
+# Room sensor status
+binary_sensor:
+  - platform: homeassistant
+    entity_id: binary_sensor.t1_sensor_state
+    id: t1_online
+
+    
+  - platform: homeassistant
+    entity_id: binary_sensor.t2_sensor_state
+    id: t2_online
+
+    
+  - platform: homeassistant
+    entity_id: binary_sensor.t3_sensor_state
+    id: t3_online
+
+    
+  - platform: homeassistant
+    entity_id: binary_sensor.t4_sensor_state
+    id: t4_online
+
+  - platform: homeassistant
+    entity_id: input_boolean.ha_display_deep_sleep
+    id: ha_display_deep_sleep
+    on_state:
+      then:
+        - if:
+            condition:
+              binary_sensor.is_on: ha_display_deep_sleep
+            then:
+              - script.execute: refresh_display
+
+# Smart plugs switches    
+switch:
+  - platform: homeassistant
+    entity_id: switch.p1
+    id: p1_state
+    
+  - platform: homeassistant
+    entity_id: switch.p2
+    id: p2_state
+
+# Input Helpers    
+number:
+  - platform: homeassistant
+    entity_id: input_number.sleep_start_hour
+    id: ha_sleep_start_hour
+
+  - platform: homeassistant
+    entity_id: input_number.wake_hour
+    id: ha_wake_hour
+
+  - platform: homeassistant
+    entity_id: input_number.sleep_duration
+    id: ha_sleep_duration

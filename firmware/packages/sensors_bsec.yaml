@@ -1,0 +1,116 @@
+# =============================================================================
+# Sensor Configuration
+# =============================================================================
+#
+# Configures locally connected sensors and Home Assistant entities used by
+# the display.
+#
+# Includes environmental measurements using BSEC2 algorithm, battery monitoring,
+# and configurable sleep schedule entities.
+
+
+# BME68X Device
+bme68x_bsec2_i2c:
+  i2c_id: i2c_a
+  address: 0x77
+  model: bme688
+  operating_age: 28d
+  sample_rate: ULP
+  supply_voltage: 3.3V
+  state_save_interval: 6h
+  temperature_offset: 1.5
+
+sensor:
+  #Battery Voltage
+  - platform: adc
+    pin: GPIO1
+    id: battery_voltage
+    name: "Battery Voltage"
+    unit_of_measurement: "v"
+    icon: "mdi:battery"
+    attenuation: 12db
+
+    samples: 64
+    sampling_mode: avg
+
+    update_interval: 60s
+
+    filters:
+      - multiply: 2.068
+
+  #Battery SoC
+  - platform: template
+    id: battery_percent
+    name: "Battery SoC"
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    lambda: |-
+      return batteryPercent(id(battery_voltage).state);
+
+    update_interval: 1s
+
+  # BME68X Sensor reading
+  # Temperature, humidity, pressure air quality sensor
+  - platform: bme68x_bsec2
+    temperature:
+      id: temperature_sensor
+      name: "Temperature"
+      accuracy_decimals: 1
+      filters: 
+        - delta: 0.2
+    pressure:
+      id: pressure_sensor
+      name: "Pressure"
+      unit_of_measurement: mbar
+      accuracy_decimals: 0
+      filters: 
+        - delta: 1
+    humidity:
+      id: humidity_sensor
+      name: "Humidity"
+      accuracy_decimals: 0
+      filters: 
+        - delta: 1
+    co2_equivalent:
+      id: CO2_sensor
+      name: "CO2 Equivalent"
+      accuracy_decimals: 0
+    breath_voc_equivalent:
+      id: VOC_sensor
+      name: "Breath VOC Equivalent"      
+    iaq:
+      name: "IAQ"
+      id: iaq
+
+text_sensor:
+    - platform: bme68x_bsec2
+      iaq_accuracy:
+        name: "IAQ Accuracy"
+    - platform: template
+      name: "IAQ Classification"
+      lambda: |-
+        if ( int(id(iaq).state) <= 50) {
+          return {"Excellent"};
+        }
+        else if (int(id(iaq).state) >= 51 && int(id(iaq).state) <= 100) {
+          return {"Good"};
+        }
+         else if (int(id(iaq).state) >= 101 && int(id(iaq).state) <= 150) {
+            return {"Lightly polluted"};
+        }
+        else if (int(id(iaq).state) >= 151 && int(id(iaq).state) <= 200) {
+            return {"Moderately polluted"};
+        }
+        else if (int(id(iaq).state) >= 201 && int(id(iaq).state) <= 250) {
+            return {"Heavily polluted"};
+        }
+        else if (int(id(iaq).state) >= 251 && int(id(iaq).state) <= 350) {
+            return {"Severely polluted"};
+        }
+        else if (int(id(iaq).state) >= 351) {
+            return {"Extremely polluted"};
+        }
+        else {
+            return {"error"};
+        }      

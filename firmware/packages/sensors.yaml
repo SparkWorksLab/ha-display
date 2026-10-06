@@ -1,0 +1,106 @@
+# =============================================================================
+# Sensor Configuration
+# =============================================================================
+#
+# Configures locally connected sensors and Home Assistant entities used by
+# the display.
+#
+# Includes environmental measurements, battery monitoring, and configurable
+# sleep schedule entities.
+
+sensor:
+  #Battery Voltage
+  - platform: adc
+    pin: GPIO1
+    id: battery_voltage
+    name: "Battery Voltage"
+    unit_of_measurement: "v"
+    icon: "mdi:battery"
+    attenuation: 12db
+
+    samples: 64
+    sampling_mode: avg
+
+    update_interval: 60s
+
+    filters:
+      - multiply: 2.068
+
+  #Battery SoC
+  - platform: template
+    id: battery_percent
+    name: "Battery SoC"
+    unit_of_measurement: "%"
+    device_class: battery
+    state_class: measurement
+    lambda: |-
+      return batteryPercent(id(battery_voltage).state);
+
+    update_interval: 1s
+
+  # BME68X Sensor reading
+  # Temperature, humidity, pressure air quality sensor
+  - platform: bme680
+    id: bme_680
+    temperature:
+      id: temperature_sensor
+      name: "Temperature"
+      oversampling: 16x
+      accuracy_decimals: 1
+      filters: 
+        - delta: 0.2
+    pressure:
+      id: pressure_sensor
+      name: "Pressure"
+      unit_of_measurement: mbar
+      accuracy_decimals: 0
+      filters: 
+        - delta: 1
+    humidity:
+      id: humidity_sensor
+      name: "Humidity"
+      accuracy_decimals: 0
+      filters: 
+        - delta: 1
+
+    gas_resistance:
+      id: gas_resistance
+      name: "BME680 Gas Resistance"
+      # ------ EVENT-DRIVEN TRIGGER ------
+      on_value:
+        then:
+          - lambda: |-
+              /**< 1. This code executes ONLY when a fresh, valid gas reading is received from the hardware. */
+              /**< 'x' automatically contains the newly sampled gas_resistance value. */
+              float gas = x; 
+              float hum = id(humidity_sensor).get_state();
+              
+              /**< Calculate the IAQ index and push it directly to the template component. */
+              float iaq_value = log(gas) + 0.04 * hum;
+              id(iaq).publish_state(iaq_value);
+              
+              /**< 2. Evaluate the text classification using the newly calculated IAQ value. */
+              int current_iaq = int(iaq_value);
+              if (current_iaq <= 50)       { id(iaq_classification).publish_state("Excellent"); }
+              else if (current_iaq <= 100) { id(iaq_classification).publish_state("Good"); }
+              else if (current_iaq <= 150) { id(iaq_classification).publish_state("Lightly polluted"); }
+              else if (current_iaq <= 200) { id(iaq_classification).publish_state("Moderately polluted"); }
+              else if (current_iaq <= 250) { id(iaq_classification).publish_state("Heavily polluted"); }
+              else if (current_iaq <= 350) { id(iaq_classification).publish_state("Severely polluted"); }
+              else if (current_iaq <= 500) { id(iaq_classification).publish_state("Extremely polluted"); }
+              else                         { id(iaq_classification).publish_state("unknown"); }
+
+    address: 0x77
+    update_interval: 60s        
+
+  - platform: template
+    name: "BME680 Indoor Air Quality"
+    id: iaq
+    icon: "mdi:gauge"
+    state_class: "measurement"
+
+text_sensor:
+  - platform: template
+    name: "BME680 IAQ Classification"
+    id: iaq_classification 
+    icon: "mdi:checkbox-marked-circle-outline"

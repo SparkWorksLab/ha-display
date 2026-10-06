@@ -1,0 +1,169 @@
+# =============================================================================
+# Home Assistant Display Package
+# =============================================================================
+#
+# Home Assistant package required by the ESPHome Home Assistant Display.
+#
+# Provides template entities used to prepare weather forecast data and Display
+# the availability of remote room sensors.
+#
+# Copy this file to the Home Assistant packages directory and enable package
+# loading in configuration.yaml.
+
+template:
+
+  - trigger:
+      - platform: homeassistant
+        event: start
+
+      - platform: time_pattern
+        hours: "/1"
+        minutes: 1
+
+    action:
+      - service: homeassistant.update_entity
+        target:
+          entity_id: weather.forecast_home
+
+      - delay: "00:00:02"
+
+      - service: weather.get_forecasts
+        target:
+          entity_id: weather.forecast_home
+        data:
+          type: daily
+        response_variable: daily
+
+    sensor:
+      - name: "eink_sensors"
+        unique_id: eink_sensors
+
+        state: >
+          {{ daily['weather.forecast_home'].forecast[0].condition }}
+
+        attributes:
+
+          forecast_day_1: >
+            {{ as_timestamp(daily['weather.forecast_home'].forecast[0].datetime)
+               | timestamp_custom('%a')
+               | upper }}
+
+          forecast_condition_1: >
+            {{ daily['weather.forecast_home'].forecast[0].condition }}
+
+          forecast_temp_max_1: >
+            {{ daily['weather.forecast_home'].forecast[0].temperature | round }}
+
+          forecast_temp_min_1: >
+            {{ daily['weather.forecast_home'].forecast[0].templow | round }}
+
+          forecast_day_2: >
+            {{ as_timestamp(daily['weather.forecast_home'].forecast[1].datetime)
+               | timestamp_custom('%a')
+               | upper }}
+
+          forecast_condition_2: >
+            {{ daily['weather.forecast_home'].forecast[1].condition }}
+
+          forecast_temp_max_2: >
+            {{ daily['weather.forecast_home'].forecast[1].temperature | round }}
+
+          forecast_temp_min_2: >
+            {{ daily['weather.forecast_home'].forecast[1].templow | round }}
+
+          forecast_day_3: >
+            {{ as_timestamp(daily['weather.forecast_home'].forecast[2].datetime)
+               | timestamp_custom('%a')
+               | upper }}
+
+          forecast_condition_3: >
+            {{ daily['weather.forecast_home'].forecast[2].condition }}
+
+          forecast_temp_max_3: >
+            {{ daily['weather.forecast_home'].forecast[2].temperature | round }}
+
+          forecast_temp_min_3: >
+            {{ daily['weather.forecast_home'].forecast[2].templow | round }}
+
+          forecast_day_4: >
+            {{ as_timestamp(daily['weather.forecast_home'].forecast[3].datetime)
+               | timestamp_custom('%a')
+               | upper }}
+
+          forecast_condition_4: >
+            {{ daily['weather.forecast_home'].forecast[3].condition }}
+
+          forecast_temp_max_4: >
+            {{ daily['weather.forecast_home'].forecast[3].temperature | round }}
+
+          forecast_temp_min_4: >
+            {{ daily['weather.forecast_home'].forecast[3].templow | round }}
+
+          forecast_day_5: >
+            {{ as_timestamp(daily['weather.forecast_home'].forecast[4].datetime)
+               | timestamp_custom('%a')
+               | upper }}
+
+          forecast_condition_5: >
+            {{ daily['weather.forecast_home'].forecast[4].condition }}
+
+          forecast_temp_max_5: >
+            {{ daily['weather.forecast_home'].forecast[4].temperature | round }}
+
+          forecast_temp_min_5: >
+            {{ daily['weather.forecast_home'].forecast[4].templow | round }}
+
+
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+
+    binary_sensor:
+      - name: T1 Sensor State
+        unique_id: t1_online
+        state: >
+          {{ (now() - states.sensor.t1_temperature.last_updated).total_seconds() < 900 }}
+
+      - name: T2 Sensor State
+        unique_id: t2_online
+        state: >
+          {{ (now() - states.sensor.t2_temperature.last_updated).total_seconds() < 900 }}
+
+      - name: T3 Sensor State
+        unique_id: t3_online
+        state: >
+          {{ (now() - states.sensor.t3_temperature.last_updated).total_seconds() < 900 }}
+
+      - name: T4 Sensor State
+        unique_id: t4_online
+        state: >
+          {{ (now() - states.sensor.t4_temperature.last_updated).total_seconds() < 900 }}
+
+    sensor:
+      - name: T1 Sensor Age
+        unique_id: t1_sensor_age
+        unit_of_measurement: "min"
+        state_class: measurement
+        state: >
+          {{ ((now() - states.sensor.t1_temperature.last_updated).total_seconds() / 60) | round(0) }}          
+
+      - name: T2 Sensor Age
+        unique_id: t2_sensor_age
+        unit_of_measurement: "min"
+        state_class: measurement
+        state: >
+          {{ ((now() - states.sensor.t2_temperature.last_updated).total_seconds() / 60) | round(0) }}          
+
+      - name: T3 Sensor Age
+        unique_id: t3_sensor_age
+        unit_of_measurement: "min"
+        state_class: measurement
+        state: >
+          {{ ((now() - states.sensor.t3_temperature.last_updated).total_seconds() / 60) | round(0) }}          
+
+      - name: T4 Sensor Age
+        unique_id: t4_sensor_age
+        unit_of_measurement: "min"
+        state_class: measurement
+        state: >
+          {{ ((now() - states.sensor.t4_temperature.last_updated).total_seconds() / 60) | round(0) }}                
